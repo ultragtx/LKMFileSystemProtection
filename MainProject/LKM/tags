@@ -1,0 +1,28 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+KERNELBUILD	Makefile	/^KERNELBUILD :=\/lib\/modules\/$(shell uname -r)\/build$/;"	m
+base	getsyscalltable.c	/^    unsigned int base;$/;"	m	struct:__anon1	file:
+clear_and_return_cr0	syscallinterception.c	/^unsigned int clear_and_return_cr0(void)$/;"	f
+flags	getsyscalltable.c	/^    unsigned char none, flags;$/;"	m	struct:__anon2	file:
+fsprotect-objs	Makefile	/^fsprotect-objs := fsprotection.o getsyscalltable.o syscallinterception.o printstring.o$/;"	m
+get_sys_call_table	getsyscalltable.c	/^unsigned int get_sys_call_table(void)$/;"	f
+idt	getsyscalltable.c	/^}__attribute__((packed))idt;$/;"	v	typeref:struct:__anon2
+idtr	getsyscalltable.c	/^}__attribute__((packed))idtr;$/;"	v	typeref:struct:__anon1
+limit	getsyscalltable.c	/^    unsigned short limit;$/;"	m	struct:__anon1	file:
+lkm_exit	syscallinterception.c	/^module_exit(lkm_exit);/;"	v
+lkm_exit	syscallinterception.c	/^static void lkm_exit(void)$/;"	f	file:
+lkm_init	syscallinterception.c	/^module_init(lkm_init);$/;"	v
+lkm_init	syscallinterception.c	/^static int lkm_init(void) {$/;"	f	file:
+none	getsyscalltable.c	/^    unsigned char none, flags;$/;"	m	struct:__anon2	file:
+off1	getsyscalltable.c	/^    unsigned short off1;$/;"	m	struct:__anon2	file:
+off2	getsyscalltable.c	/^    unsigned short off2;$/;"	m	struct:__anon2	file:
+origin_mkdir_handler	syscallinterception.c	/^unsigned int origin_mkdir_handler;$/;"	v
+print_string	printstring.c	/^static void print_string(char *str)$/;"	f	file:
+sel	getsyscalltable.c	/^    unsigned short sel;$/;"	m	struct:__anon2	file:
+setback_cr0	syscallinterception.c	/^void setback_cr0(unsigned int val)$/;"	f
+sys_new_mkdir_handler	fsprotection.c	/^asmlinkage long sys_new_mkdir_handler(void)$/;"	f
+syscall_table	syscallinterception.c	/^unsigned int* syscall_table;$/;"	v
