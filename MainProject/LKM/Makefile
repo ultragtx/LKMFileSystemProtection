@@ -1,5 +1,5 @@
-obj-m += fsprotect.o
-fsprotect-objs := fsprotection.o getsyscalltable.o syscallinterception.o printstring.o
+obj-m += zzz.o
+zzz-objs := fsprotection.o getsyscalltable.o syscallinterception.o printstring.o communicate.o
 
 KERNELBUILD :=/lib/modules/$(shell uname -r)/build
 
