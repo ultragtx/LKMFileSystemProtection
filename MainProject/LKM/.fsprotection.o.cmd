@@ -516,6 +516,7 @@ deps_/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.o 
     $(wildcard include/config/mgeode/lx.h) \
   include/asm-generic/module.h \
   include/trace/events/module.h \
+  include/linux/file.h \
   include/linux/fs.h \
     $(wildcard include/config/dnotify.h) \
     $(wildcard include/config/quota.h) \
@@ -545,8 +546,16 @@ deps_/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.o 
   include/linux/fcntl.h \
   /usr/src/linux-headers-2.6.32-24-generic/arch/x86/include/asm/fcntl.h \
   include/asm-generic/fcntl.h \
-  include/linux/dirent.h \
+  /usr/src/linux-headers-2.6.32-24-generic/arch/x86/include/asm/uaccess.h \
+    $(wildcard include/config/x86/wp/works/ok.h) \
+    $(wildcard include/config/x86/intel/usercopy.h) \
+  /usr/src/linux-headers-2.6.32-24-generic/arch/x86/include/asm/uaccess_32.h \
+  include/linux/vmalloc.h \
+  include/linux/namei.h \
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/printstring.h \
+  /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/communicate.h \
+  /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.h \
+  include/linux/dirent.h \
 
 /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.o: $(deps_/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.o)
 

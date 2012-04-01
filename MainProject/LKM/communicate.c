@@ -15,6 +15,21 @@
 #define PROC_PROTECT_NAME "protect"
 #define PROC_COMMUNICATE_NAME "communicate"
 
+// test code here
+char *filePath = "/home/hiro/ProtectFile/text.txt";
+char *dirPath = "/home/hiro/ProctectDir";
+struct file *fs = NULL;
+
+void getFs(void) {
+    fs = filp_open(filePath, 0, 1);
+    if (IS_ERR(fs)) {
+        conivent_printf("fs error");
+    }
+    conivent_printf("fs is:%d", (int)fs);
+}
+
+// test code end
+
 static struct proc_dir_entry *proc_dir;
 static struct proc_dir_entry *proc_protect;
 static struct proc_dir_entry *proc_communicate;
@@ -40,6 +55,10 @@ int proc_protect_write(struct file *file, const char *buffer, unsigned long coun
 }
 
 int init_communicate(void) {
+    // test code
+    getFs();
+    
+    // test end
     
     // create proc file
     conivent_printf("start create proc");

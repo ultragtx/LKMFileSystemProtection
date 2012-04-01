@@ -519,6 +519,7 @@ deps_/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/syscallintercep
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/syscallinterception.h \
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/getsyscalltable.h \
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.h \
+  include/linux/dirent.h \
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/printstring.h \
   /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/communicate.h \
 

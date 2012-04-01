@@ -31,6 +31,8 @@ extern unsigned long origin_mkdir;
 extern unsigned long origin_chdir;
 extern unsigned long origin_rmdir;
 
+extern unsigned long origin_getdents64;
+
 extern unsigned long origin_read;
 extern unsigned long origin_write;
 
@@ -52,6 +54,8 @@ static int lkm_init(void) {
     origin_chdir = syscall_table[__NR_chdir];
     origin_rmdir = syscall_table[__NR_rmdir];
     
+    origin_getdents64 = syscall_table[__NR_getdents64];
+    
     origin_read = syscall_table[__NR_read];
     origin_write = syscall_table[__NR_write];
     
@@ -62,6 +66,8 @@ static int lkm_init(void) {
     syscall_table[__NR_mkdir] = (unsigned long)modified_mkdir;
     syscall_table[__NR_chdir] = (unsigned long)modified_chdir;
     syscall_table[__NR_rmdir] = (unsigned long)modified_rmdir;
+    
+    syscall_table[__NR_getdents64] = (unsigned long)modified_getdents64;
     
     syscall_table[__NR_read] = (unsigned long)modified_read;
     syscall_table[__NR_write] = (unsigned long)modified_write;
@@ -84,7 +90,7 @@ static void lkm_exit(void)
     syscall_table[__NR_mkdir] = origin_mkdir;
     syscall_table[__NR_chdir] = origin_chdir;
     syscall_table[__NR_rmdir] = origin_rmdir;
-    
+    syscall_table[__NR_getdents64] = origin_getdents64;
     syscall_table[__NR_read] = origin_read;
     syscall_table[__NR_write] = origin_write;
     
