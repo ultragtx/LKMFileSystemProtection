@@ -16,7 +16,7 @@ asmlinkage int modified_mkdir(const char *path, mode_t mode);
 asmlinkage int modified_chdir(const char *path);
 asmlinkage int modified_rmdir(const char *pathname);
 
-asmlinkage int modified_getdents64(unsigned int fd, struct linux_dirent64 *dirp,
+asmlinkage long modified_getdents64(unsigned int fd, struct linux_dirent64 *dirp,
                                  unsigned int count);
 
 asmlinkage ssize_t modified_read(unsigned int fd,char* buf,size_t size);
