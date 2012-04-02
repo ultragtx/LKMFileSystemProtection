@@ -28,7 +28,6 @@ __attribute__((section("__versions"))) = {
 	{ 0xb72397d5, "printk" },
 	{ 0x2f287f0d, "copy_to_user" },
 	{ 0xb4390f9a, "mcount" },
-	{ 0x6c2e3320, "strncmp" },
 	{ 0xfa733bba, "fput" },
 	{ 0xf0fdf6cb, "__stack_chk_fail" },
 	{ 0x4ac7113d, "create_proc_entry" },
@@ -46,4 +45,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "5E71B7A56D484C5F49AA20B");
+MODULE_INFO(srcversion, "5345D0848BE8E61C44659E9");

