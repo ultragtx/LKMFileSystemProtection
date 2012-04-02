@@ -21,13 +21,17 @@ __attribute__((section("__versions"))) = {
 	{ 0x2e9014ad, "per_cpu__current_task" },
 	{ 0xd0d8621b, "strlen" },
 	{ 0x7b8d93fd, "remove_proc_entry" },
+	{ 0x3c2c5af5, "sprintf" },
+	{ 0xe2d5255a, "strcmp" },
 	{ 0x891d4342, "proc_mkdir" },
 	{ 0xb72397d5, "printk" },
 	{ 0xb4390f9a, "mcount" },
+	{ 0xfa733bba, "fput" },
 	{ 0xf0fdf6cb, "__stack_chk_fail" },
 	{ 0x4ac7113d, "create_proc_entry" },
 	{ 0xf2036f33, "fget" },
 	{ 0x954cbb26, "vsprintf" },
+	{ 0xe914e41e, "strcpy" },
 	{ 0x15307093, "filp_open" },
 };
 
@@ -37,4 +41,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "F3AFB0DB97FCA4722F5E324");
+MODULE_INFO(srcversion, "D177AD3C096E9B7C7B98001");
