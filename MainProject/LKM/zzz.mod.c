@@ -18,10 +18,15 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0xa7672d5a, "module_layout" },
+	{ 0x6d9d966, "d_path" },
 	{ 0x2e9014ad, "per_cpu__current_task" },
+	{ 0x20623cac, "kmalloc_caches" },
 	{ 0x12da5bb2, "__kmalloc" },
 	{ 0xd0d8621b, "strlen" },
+	{ 0x1a75caa3, "_read_lock" },
+	{ 0x105e2727, "__tracepoint_kmalloc" },
 	{ 0x7b8d93fd, "remove_proc_entry" },
+	{ 0xddf663af, "path_get" },
 	{ 0x3c2c5af5, "sprintf" },
 	{ 0xe2d5255a, "strcmp" },
 	{ 0x891d4342, "proc_mkdir" },
@@ -29,6 +34,8 @@ __attribute__((section("__versions"))) = {
 	{ 0x2f287f0d, "copy_to_user" },
 	{ 0xb4390f9a, "mcount" },
 	{ 0xfa733bba, "fput" },
+	{ 0x61651be, "strcat" },
+	{ 0x6eb25b1e, "kmem_cache_alloc" },
 	{ 0xf0fdf6cb, "__stack_chk_fail" },
 	{ 0x4ac7113d, "create_proc_entry" },
 	{ 0x37a0cba, "kfree" },
@@ -45,4 +52,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "5345D0848BE8E61C44659E9");
+MODULE_INFO(srcversion, "3D2E2BCCA48697DCC86A1B0");

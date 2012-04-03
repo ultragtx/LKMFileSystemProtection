@@ -14,6 +14,11 @@
 
 #include <linux/namei.h>
 #include <linux/string.h>
+
+#include <linux/mount.h>
+#include <linux/netdevice.h>
+#include <linux/fs_struct.h>
+
 #include "printstring.h"
 #include "communicate.h"
 #include "fsprotection.h"
@@ -47,7 +52,7 @@ int getPathFromFd(unsigned int fd, char *path) {
 
 int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
     struct file *this_file = NULL;
-    char path[80];
+    //char path[80];
     
     
     this_file = fget(fd);
@@ -73,6 +78,75 @@ int isInodeProtected(unsigned long inode, FILE_PROTECT_TYPE type) {
     return 0;
 }
 
+char *getfullPath(const char *pathname, char *fullpath) {
+    //char *fullpath = NULL;
+    char *path = NULL;
+    char *start = NULL;
+    //struct dentry *pwd;
+    //struct vfsmount *vfsmount;
+    
+    struct fs_struct *fs = current->fs;
+    
+    struct path pwd;
+    
+    /*fullpath = kmalloc(PATH_MAX, GFP_KERNEL);
+    if (!fullpath) {
+        // kmalloc error
+        return fullpath;
+    }
+    memset(fullpath, 0, PATH_MAX);*/
+    
+    path = kmalloc(PATH_MAX, GFP_KERNEL);
+    if (!path) {
+        kfree(fullpath);
+        return fullpath;
+    }
+    // 2.4
+    // get dentry and vfsmnt
+    //read_lock(&(fs->lock));
+    //pwd = dget(fs->pwd);
+    //vfsmount = mntget(fs->pwdmnt);
+    //read_unlock(&(fs->lock));
+    
+    // get path
+    //start = d_path(pwd, vfsmount, path, PATH_MAX);
+    //strcat(fullpath, start);
+    
+    // 2.6.32
+    read_lock(&fs->lock);
+    pwd = fs->pwd;
+    path_get(&pwd);
+    read_unlock(&fs->lock);
+    //set_fs_pwd(fs, &pwd);
+    start = d_path(&pwd, path, PATH_MAX);
+    
+    
+    strcat(fullpath, start);
+    strcat(fullpath, "/");
+    strcat(fullpath, pathname);
+    
+    
+    
+    // 2.6.35
+    // use spinlock
+    
+    kfree(path);
+    
+    return fullpath;
+}
+
+char *copystringfromuser(const char *userstring, char *kernelstring) {
+    //int index = 0;
+    const char *src = userstring;
+    char *tar = kernelstring;
+    do {
+        //kernelstring[index++] = __get_user(tmp++, 1);
+        copy_from_user(tar++, src++, 1);
+    } while (*(tar - 1) != '\0');
+    //conivent_printf("%s", kernelstring);
+    return kernelstring;
+}
+
 // test code end
 
 asmlinkage int (*origin_mkdir)(const char *path, mode_t mode);
@@ -86,6 +160,9 @@ asmlinkage ssize_t (*origin_read)(unsigned int,char*,size_t);
 asmlinkage ssize_t (*origin_write)(int fd, const void *buf, size_t count);
 
 asmlinkage int (*origin_open)(const char *pathname, int flags, mode_t mode);
+
+asmlinkage int (*origin_unlinkat)(int dirfd, const char *pathname, int flags);
+asmlinkage int (*origin_unlink)(const char *pathname);
 
 asmlinkage int modified_mkdir(const char *path, mode_t mode) {
     //printk(KERN_ALERT "mkdir is not allowed now\n");
@@ -120,7 +197,7 @@ asmlinkage long modified_getdents64 (unsigned int fd, struct linux_dirent64 *dir
     // prev points to the previous
     struct linux_dirent64 *dirp2, *dirp3, *head = NULL, *prev = NULL;
     
-    char hide_file[] = "text.txt";
+    //char hide_file[] = "text.txt";
     
     buf_length = origin_getdents64(fd, dirp, count);
     
@@ -153,6 +230,7 @@ asmlinkage long modified_getdents64 (unsigned int fd, struct linux_dirent64 *dir
         }
         
         //if (strncmp(dirp3->d_name, hide_file, strlen(hide_file)) == 0) {
+        
         if (isInodeProtected(dirp3->d_ino, FILE_PROTECT_READ)) {
             if (!prev) {
                 // head is our file
@@ -208,3 +286,27 @@ asmlinkage int modified_open(const char *pathname, int flags, mode_t mode) {
  conivent_printf("close is not allowed now");
  return 0;
  }*/
+
+
+asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags) {
+    char *fullpath;
+    char *kernelpathname;
+    kernelpathname = (char *)kmalloc(100, GFP_KERNEL);
+    copystringfromuser(pathname, kernelpathname);
+    
+    fullpath = (char *)kmalloc(PATH_MAX, GFP_KERNEL);
+
+    getfullPath(kernelpathname, fullpath);
+    
+    conivent_printf("modified_unlinkat %d", dirfd);
+    conivent_printf("%s", fullpath);
+    
+    kfree(kernelpathname);
+    kfree(fullpath);
+    return origin_unlinkat(dirfd, pathname, flags);
+}
+
+asmlinkage int modified_unlink(const char *pathname) {
+    conivent_printf("modified_unlink");
+    return origin_unlink(pathname);
+}
