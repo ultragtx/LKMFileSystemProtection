@@ -22,6 +22,7 @@
 #include "printstring.h"
 #include "communicate.h"
 #include "fsprotection.h"
+#include "utilities.h"
 
 // test code here
 
@@ -31,29 +32,10 @@ typedef enum {
     FILE_PROTECT_OPEN
 }FILE_PROTECT_TYPE;
 
-int getPathFromFd(unsigned int fd, char *path) {
-    struct file *file;
-    struct dentry *p_dentry;
-    char root_path[80];
-    file = fget(fd);
-    if (file == NULL) {
-        return -1;
-    }
-    p_dentry = file->f_dentry;
-    strcpy(root_path, p_dentry->d_sb->s_root->d_iname);
-    sprintf(path, "%s", p_dentry->d_name.name);
-    while (strcmp(p_dentry->d_name.name, root_path)) { // not root
-        p_dentry = p_dentry->d_parent;
-        sprintf(path, "%s/%s", p_dentry->d_name.name, path);
-    }
-    fput(file);
-    return 0;
-}
-
 int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
     struct file *this_file = NULL;
-    //char path[80];
-    
+    //char *path;
+    //path = (char *)kmalloc(PATH_MAX, GFP_KERNEL);
     
     this_file = fget(fd);
     if (this_file != NULL) {
@@ -76,75 +58,6 @@ int isInodeProtected(unsigned long inode, FILE_PROTECT_TYPE type) {
         return 1;
     }
     return 0;
-}
-
-char *getfullPath(const char *pathname, char *fullpath) {
-    //char *fullpath = NULL;
-    char *path = NULL;
-    char *start = NULL;
-    //struct dentry *pwd;
-    //struct vfsmount *vfsmount;
-    
-    struct fs_struct *fs = current->fs;
-    
-    struct path pwd;
-    
-    /*fullpath = kmalloc(PATH_MAX, GFP_KERNEL);
-    if (!fullpath) {
-        // kmalloc error
-        return fullpath;
-    }
-    memset(fullpath, 0, PATH_MAX);*/
-    
-    path = kmalloc(PATH_MAX, GFP_KERNEL);
-    if (!path) {
-        kfree(fullpath);
-        return fullpath;
-    }
-    // 2.4
-    // get dentry and vfsmnt
-    //read_lock(&(fs->lock));
-    //pwd = dget(fs->pwd);
-    //vfsmount = mntget(fs->pwdmnt);
-    //read_unlock(&(fs->lock));
-    
-    // get path
-    //start = d_path(pwd, vfsmount, path, PATH_MAX);
-    //strcat(fullpath, start);
-    
-    // 2.6.32
-    read_lock(&fs->lock);
-    pwd = fs->pwd;
-    path_get(&pwd);
-    read_unlock(&fs->lock);
-    //set_fs_pwd(fs, &pwd);
-    start = d_path(&pwd, path, PATH_MAX);
-    
-    
-    strcat(fullpath, start);
-    strcat(fullpath, "/");
-    strcat(fullpath, pathname);
-    
-    
-    
-    // 2.6.35
-    // use spinlock
-    
-    kfree(path);
-    
-    return fullpath;
-}
-
-char *copystringfromuser(const char *userstring, char *kernelstring) {
-    //int index = 0;
-    const char *src = userstring;
-    char *tar = kernelstring;
-    do {
-        //kernelstring[index++] = __get_user(tmp++, 1);
-        copy_from_user(tar++, src++, 1);
-    } while (*(tar - 1) != '\0');
-    //conivent_printf("%s", kernelstring);
-    return kernelstring;
 }
 
 // test code end
@@ -289,24 +202,23 @@ asmlinkage int modified_open(const char *pathname, int flags, mode_t mode) {
 
 
 asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags) {
-    char *fullpath;
-    char *kernelpathname;
-    kernelpathname = (char *)kmalloc(100, GFP_KERNEL);
-    copystringfromuser(pathname, kernelpathname);
+    char *fullpath = NULL;
+    char *kernelpathname = NULL;
     
-    fullpath = (char *)kmalloc(PATH_MAX, GFP_KERNEL);
-
-    getfullPath(kernelpathname, fullpath);
+    copyStringFromUser(pathname, &kernelpathname);
+    getNewFullPath(kernelpathname, &fullpath);
     
     conivent_printf("modified_unlinkat %d", dirfd);
     conivent_printf("%s", fullpath);
     
     kfree(kernelpathname);
     kfree(fullpath);
+    //return -EACCES;
     return origin_unlinkat(dirfd, pathname, flags);
 }
 
 asmlinkage int modified_unlink(const char *pathname) {
     conivent_printf("modified_unlink");
+    //return -EACCES;
     return origin_unlink(pathname);
 }

@@ -1,2 +1,0 @@
-/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/zzz.ko
-/mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/fsprotection.o /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/getsyscalltable.o /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/syscallinterception.o /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/printstring.o /mnt/hgfs/Software3/LKMFileSystemProtection/MainProject/LKM/communicate.o
