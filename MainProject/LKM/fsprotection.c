@@ -39,7 +39,7 @@ int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
     
     this_file = fget(fd);
     if (this_file != NULL) {
-        if (this_file->f_dentry->d_inode == fs->f_dentry->d_inode) {
+        if (this_file->f_dentry->d_inode == testfs->f_dentry->d_inode) {
             //conivent_printf("isProtect yes");
             fput(this_file);
             /*if (getPathFromFd(fd, path) == 0) {
@@ -53,8 +53,8 @@ int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
 }
 
 int isInodeProtected(unsigned long inode, FILE_PROTECT_TYPE type) {
-    //conivent_printf("isInodeProtected %d, %d", inode, fs->f_dentry->d_inode->i_ino);
-    if (fs->f_dentry->d_inode->i_ino == inode) {
+    //conivent_printf("isInodeProtected %d, %d", inode, testfs->f_dentry->d_inode->i_ino);
+    if (testfs->f_dentry->d_inode->i_ino == inode) {
         return 1;
     }
     return 0;

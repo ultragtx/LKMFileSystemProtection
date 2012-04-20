@@ -6,3 +6,4 @@
 *.order
 *.symvers
 .tmp_versions
+zzz.mod.c

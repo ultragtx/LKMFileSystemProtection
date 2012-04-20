@@ -8,31 +8,283 @@
 #include<asm/uaccess.h>
 #include<linux/namei.h>
 #include<linux/fs.h>
+#include<linux/sched.h>
 
 #include "printstring.h"
+#include "communicate.h"
 
 #define PROC_DIR_NAME "gsfileprotection"
 #define PROC_PROTECT_NAME "protect"
+#define PROC_CTRL_NAME "ctrl"
+#define PROC_NOTI_NAME "noti"
+
 #define PROC_COMMUNICATE_NAME "communicate"
 
 // test code here
 char *filePath = "/home/hiro/ProtectFile/text.txt";
 char *dirPath = "/home/hiro/ProctectDir";
-struct file *fs = NULL;
+struct file *testfs = NULL;
 
 void getFs(void) {
-    fs = filp_open(filePath, 0, 1);
-    if (IS_ERR(fs)) {
-        conivent_printf("fs error");
+    testfs = filp_open(filePath, 0, 1);
+    if (IS_ERR(testfs)) {
+        conivent_printf("testfs error");
     }
-    conivent_printf("fs is:%d", (int)fs);
+    conivent_printf("testfs is:%d", (int)testfs);
 }
 
 // test code end
+#define FILEPATH_SIZE 256
+#define FILELIST_SIZE 256
+#define BUFFER_SIZE (FILEPATH_SIZE * FILELIST_SIZE)
 
-static struct proc_dir_entry *proc_dir;
-static struct proc_dir_entry *proc_protect;
-static struct proc_dir_entry *proc_communicate;
+char *data_buf;
+char *ctrl_data_buf;
+char *noti_data_buf;
+
+struct fileList {
+    char filePath[FILEPATH_SIZE];
+    struct inode *inode;
+    struct fileList *next;
+    ProtectType type;
+} *fileList_root;
+
+int protect_enabeled;
+
+
+struct proc_dir_entry *proc_dir;
+struct proc_dir_entry *proc_protect;
+struct proc_dir_entry *proc_ctrl;
+struct proc_dir_entry *proc_noti;
+
+struct proc_dir_entry *proc_communicate;
+
+/**
+ file protection
+ */
+
+int is_fd_protected(unsigned int fd, ProtectType ptype) {
+    struct file *this_file;
+    struct fileList *p;
+    int protected = 0;
+    
+    if (protect_enabeled) {
+        this_file = fget(fd);
+        for (p = fileList_root;p; p = p->next) {
+            if (p->inode == this_file->f_dentry->d_inode) {
+                protected = 1;
+                break;
+            }
+        }
+        fput(this_file);
+    }
+    return protected;
+}
+
+int is_ino_protected(unsigned long ino, ProtectType ptype) {
+    struct fileList *p;
+    
+    for (p = fileList_root; p; p = p->next) {
+        if (p->inode->i_ino == ino) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int is_path_protected(const char *path, ProtectType ptype) {
+    struct fileList *p;
+    
+    for (p = fileList_root; p; p = p->next) {
+        if (strcmp(path, p->filePath) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/**
+ protect list 
+ */
+
+ProtectType protectTypeFromStr(char *str) {
+    ProtectType type = ProtectType_none;
+    if (strcmp(str, "r")) {
+        type = ProtectType_read;
+    }
+    else if (strcmp(str, "w")) {
+        type = ProtectType_write;
+    }
+    else if (strcmp(str, "h")) {
+        type = ProtectType_hide;
+    }
+    else if (strcmp(str, "o")) {
+        type = ProtectType_open;
+    }
+    else if (strcmp(str, "d")) {
+        type = ProtectType_del;
+    }
+    return type;
+}
+
+int create_list(struct fileList **top, char *rdt, size_t sz) {
+    int cnt;
+    char *tmp_data;
+    char **pp_str1;
+    char *p_str1;
+    char **pp_substr1;
+    char *p_substr1;
+    char nl[] = "\n";
+    char at[] = "@";
+    int i;
+    struct fileList *p_fl = NULL;
+    struct fileList *lastvalid_fl = NULL;
+    struct file *fs;
+    
+    for (lastvalid_fl = *top; lastvalid_fl;) {
+        if (lastvalid_fl->next) {
+            lastvalid_fl = lastvalid_fl->next;
+        }
+        else
+            break;
+    }
+    
+    tmp_data = (char *)vmalloc(sz);
+    memset(tmp_data, 0, sz);
+    strcpy(tmp_data, rdt);
+    pp_str1 = &tmp_data;
+    
+    i = 0;
+    cnt = 0;
+    do {
+        i++;
+        p_str1 = (char *)strsep(pp_str1, nl);
+        conivent_printf("p_str1 %s", p_str1);
+        pp_substr1 = &p_str1;
+        p_substr1 = (char *)strsep(pp_substr1, at);
+        conivent_printf("p_substr1 %s", p_substr1);
+        if (p_substr1) {
+            if (!strcmp(p_substr1, "")) {
+                fs = 0;
+            }
+            else {
+                fs = filp_open(p_substr1, 0, 1);
+            }
+            
+            if (!IS_ERR(fs) && fs) {
+                cnt++;
+                
+                p_fl = (struct fileList *)vmalloc(sizeof(struct fileList));
+                strncpy(p_fl->filePath, p_substr1, FILEPATH_SIZE);
+                // protect mode
+                //p_substr1 = (char *)strsep(pp_substr1, at);
+                conivent_printf("pp_substr1 %s", pp_substr1);
+                p_fl->type = protectTypeFromStr(*pp_substr1);
+                // protect mode
+                p_fl->inode = fs->f_dentry->d_inode;
+                p_fl->next = NULL;
+                if (NULL == lastvalid_fl) {
+                    *top = p_fl;
+                }
+                else {
+                    p_fl->next = lastvalid_fl->next;
+                    lastvalid_fl->next = p_fl;
+                }
+                lastvalid_fl = p_fl;
+                filp_close(fs, current->files);
+            }
+        }
+    } while (p_str1);
+    
+    vfree(tmp_data);
+    
+    return cnt;
+}
+
+void destroy_list(struct fileList **top) {
+    struct fileList *p1, *p2;
+    p1 = *top;
+    while (p1) {
+        p2 = p1->next;
+        p1->inode = NULL;
+        vfree((void *)p1);
+        p1 = p2;
+    }
+    *top = NULL;
+}
+
+void refresh(void) {
+    destroy_list(&fileList_root);
+    create_list(&fileList_root, data_buf, sizeof data_buf);
+}
+
+void clear(void) {
+    destroy_list(&fileList_root);
+    memset(data_buf, 0, sizeof data_buf);
+    create_list(&fileList_root, data_buf, sizeof data_buf);
+}
+
+void disable(void) {
+    protect_enabeled = 0;
+}
+
+void enable(void) {
+    protect_enabeled = 1;
+}
+
+/**
+ Costom read write
+ */
+int proc_ctrl_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data) {
+    //conivent_printf("proc_ctrl read");
+    return 0;
+}
+
+int proc_ctrl_write(struct file *file, const char *buffer, unsigned long count, void *data) {
+    int cnt;
+    char *raw_data = (char *)data;
+    
+    conivent_printf("proc_ctrl write");
+    
+    if (count > BUFFER_SIZE) {
+        cnt = BUFFER_SIZE;
+    }
+    else if (count == 0) {
+        return 0;
+    }
+    else {
+        cnt = count;
+    }
+    
+    if (copy_from_user(raw_data, buffer, cnt)) {
+        return -EFAULT;
+    }
+    
+    raw_data[cnt] = 0;
+    
+    if (!strncmp(raw_data, "refresh", 7)) {
+        refresh();
+    }
+    else if (!strncmp(raw_data, "clear", 5)) {
+        clear();
+    }
+    else if (!strncmp(raw_data, "disable", 7)) {
+        disable();
+    }
+    else if (!strncmp(raw_data, "enable", 6)) {
+        enable();
+    }
+    
+    return cnt;
+}
+
+int proc_noti_read(char * buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data) {
+    return 0;
+}
+
+int proc_noti_write(struct file *file, const char *buffer, unsigned long count, void *data) {
+    return 0;
+}
 
 int proc_communicate_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data) {
     conivent_printf("proc_communicate read");
@@ -50,18 +302,55 @@ int proc_protect_read(char *buffer, char **buffer_location, off_t offset, int bu
 }
 
 int proc_protect_write(struct file *file, const char *buffer, unsigned long count, void *data) {
+    int cnt;
+    int list_cnt;
+    char *raw_data = (char *)data;
+    
     conivent_printf("proc_protect write");
-    return 2;
+    
+    if (count > BUFFER_SIZE) {
+        cnt = BUFFER_SIZE;
+    }
+    else if (count == 0) {
+        return 0;
+    }
+    else {
+        cnt = count;
+    }
+    
+    if (copy_from_user(raw_data, buffer, cnt)) {
+        return -EFAULT;
+    }
+    
+    raw_data[cnt] = 0;
+    destroy_list(&fileList_root);
+    list_cnt = create_list(&fileList_root, raw_data, sizeof raw_data);
+    
+    return cnt;
 }
 
 int init_communicate(void) {
     // test code
     getFs();
-    
+    fileList_root = NULL;
     // test end
+    data_buf = (char *)vmalloc(BUFFER_SIZE);
+    ctrl_data_buf = (char *)vmalloc(BUFFER_SIZE);
+    noti_data_buf = (char *)vmalloc(BUFFER_SIZE);
+    
+    if (data_buf == NULL || ctrl_data_buf == NULL || noti_data_buf == NULL) {
+        conivent_printf("create buf failed");
+        return -ENOMEM;
+    }
+    else {
+        memset(data_buf, 0, BUFFER_SIZE);
+        memset(ctrl_data_buf, 0, BUFFER_SIZE);
+        memset(noti_data_buf, 0, BUFFER_SIZE);
+    }
     
     // create proc file
     conivent_printf("start create proc");
+    
     proc_dir = proc_mkdir(PROC_DIR_NAME, NULL);
     if (proc_dir == NULL) {
         remove_proc_entry(PROC_DIR_NAME, NULL);
@@ -70,11 +359,13 @@ int init_communicate(void) {
     }
     else {
         proc_protect = create_proc_entry(PROC_PROTECT_NAME, 0666, proc_dir);
-        proc_communicate = create_proc_entry(PROC_COMMUNICATE_NAME, 0666, proc_dir);
-        if (proc_protect == NULL || proc_communicate == NULL) {
+        proc_ctrl = create_proc_entry(PROC_CTRL_NAME, 0666, proc_dir);
+        proc_noti = create_proc_entry(PROC_NOTI_NAME, 0666, proc_dir);
+        if (proc_protect == NULL || proc_ctrl == NULL || proc_noti == NULL) {
             conivent_printf("can't create proc file");
             remove_proc_entry(PROC_PROTECT_NAME, proc_dir);
-            remove_proc_entry(PROC_COMMUNICATE_NAME, proc_dir);
+            remove_proc_entry(PROC_CTRL_NAME, proc_dir);
+            remove_proc_entry(PROC_NOTI_NAME, proc_dir);
             return -1;
         }
     }
@@ -83,9 +374,11 @@ int init_communicate(void) {
     proc_protect->write_proc = proc_protect_write;
     //proc_protect->owner = THIS_MODULE;
     
-    proc_communicate->read_proc = proc_communicate_read;
-    proc_communicate->write_proc = proc_communicate_write;
-    //proc_communicate->owner = THIS_MODULE;
+    proc_ctrl->read_proc = proc_ctrl_read;
+    proc_ctrl->write_proc = proc_ctrl_write;
+    //proc_ctrl->owner = THIS_MODULE;
+    
+    protect_enabeled = 1;
     
     return 0;
 }
@@ -94,5 +387,6 @@ void cleanup_communicate(void) {
     conivent_printf("start remove proc");
     remove_proc_entry(PROC_DIR_NAME, NULL);
     remove_proc_entry(PROC_PROTECT_NAME, proc_dir);
-    remove_proc_entry(PROC_COMMUNICATE_NAME, proc_dir);
+    remove_proc_entry(PROC_CTRL_NAME, proc_dir);
+    remove_proc_entry(PROC_NOTI_NAME, proc_dir);
 }
