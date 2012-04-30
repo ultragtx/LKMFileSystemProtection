@@ -23,6 +23,7 @@
 #include "communicate.h"
 #include "fsprotection.h"
 #include "utilities.h"
+#include "notification.h"
 
 // test code here
 
@@ -173,6 +174,7 @@ asmlinkage ssize_t modified_read(unsigned int fd,char* buf,size_t size) {
     //conivent_printf("modified read 3");
     if (isFileProtected(fd, FILE_PROTECT_READ)) {
         conivent_printf("file is protected");
+        messageWithStr("file_read is protected");
         return -EACCES;
     }
     return origin_read(fd, buf, size);

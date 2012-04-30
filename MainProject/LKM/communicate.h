@@ -17,3 +17,8 @@ extern char *filePath;
 extern struct file *testfs;
 
 // test end
+
+
+int is_fd_protected(unsigned int fd, ProtectType ptype);
+int is_ino_protected(unsigned long ino, ProtectType ptype);
+int is_path_protected(const char *path, ProtectType ptype);

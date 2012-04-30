@@ -18,8 +18,6 @@
 #define PROC_CTRL_NAME "ctrl"
 #define PROC_NOTI_NAME "noti"
 
-#define PROC_COMMUNICATE_NAME "communicate"
-
 // test code here
 char *filePath = "/home/hiro/ProtectFile/text.txt";
 char *dirPath = "/home/hiro/ProctectDir";
@@ -41,6 +39,7 @@ void getFs(void) {
 char *data_buf;
 char *ctrl_data_buf;
 char *noti_data_buf;
+char *raw_data_buff;
 
 struct fileList {
     char filePath[FILEPATH_SIZE];
@@ -57,8 +56,6 @@ struct proc_dir_entry *proc_protect;
 struct proc_dir_entry *proc_ctrl;
 struct proc_dir_entry *proc_noti;
 
-struct proc_dir_entry *proc_communicate;
-
 /**
  file protection
  */
@@ -71,7 +68,7 @@ int is_fd_protected(unsigned int fd, ProtectType ptype) {
     if (protect_enabeled) {
         this_file = fget(fd);
         for (p = fileList_root;p; p = p->next) {
-            if (p->inode == this_file->f_dentry->d_inode) {
+            if (p->inode == this_file->f_dentry->d_inode && p->type == ptype) {
                 protected = 1;
                 break;
             }
@@ -85,7 +82,7 @@ int is_ino_protected(unsigned long ino, ProtectType ptype) {
     struct fileList *p;
     
     for (p = fileList_root; p; p = p->next) {
-        if (p->inode->i_ino == ino) {
+        if (p->inode->i_ino == ino && p->type == ptype) {
             return 1;
         }
     }
@@ -96,7 +93,7 @@ int is_path_protected(const char *path, ProtectType ptype) {
     struct fileList *p;
     
     for (p = fileList_root; p; p = p->next) {
-        if (strcmp(path, p->filePath) == 0) {
+        if (strcmp(path, p->filePath) == 0 && p->type == ptype) {
             return 1;
         }
     }
@@ -178,7 +175,7 @@ int create_list(struct fileList **top, char *rdt, size_t sz) {
                 strncpy(p_fl->filePath, p_substr1, FILEPATH_SIZE);
                 // protect mode
                 //p_substr1 = (char *)strsep(pp_substr1, at);
-                conivent_printf("pp_substr1 %s", pp_substr1);
+                conivent_printf("pp_substr1 %s", *pp_substr1);
                 p_fl->type = protectTypeFromStr(*pp_substr1);
                 // protect mode
                 p_fl->inode = fs->f_dentry->d_inode;
@@ -242,7 +239,7 @@ int proc_ctrl_read(char *buffer, char **buffer_location, off_t offset, int buffe
 
 int proc_ctrl_write(struct file *file, const char *buffer, unsigned long count, void *data) {
     int cnt;
-    char *raw_data = (char *)data;
+    char *raw_data = raw_data_buff;
     
     conivent_printf("proc_ctrl write");
     
@@ -263,15 +260,19 @@ int proc_ctrl_write(struct file *file, const char *buffer, unsigned long count, 
     raw_data[cnt] = 0;
     
     if (!strncmp(raw_data, "refresh", 7)) {
+        conivent_printf("refresh");
         refresh();
     }
     else if (!strncmp(raw_data, "clear", 5)) {
+        conivent_printf("clear");
         clear();
     }
     else if (!strncmp(raw_data, "disable", 7)) {
+        conivent_printf("disable");
         disable();
     }
     else if (!strncmp(raw_data, "enable", 6)) {
+        conivent_printf("enable");
         enable();
     }
     
@@ -286,16 +287,6 @@ int proc_noti_write(struct file *file, const char *buffer, unsigned long count, 
     return 0;
 }
 
-int proc_communicate_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data) {
-    conivent_printf("proc_communicate read");
-    return 0;
-}
-
-int proc_communicate_write(struct file *file, const char *buffer, unsigned long count, void *data) {
-    conivent_printf("proc_communicate write");
-    return 0;
-}
-
 int proc_protect_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data) {
     conivent_printf("proc_protect read");
     return 0;
@@ -304,7 +295,7 @@ int proc_protect_read(char *buffer, char **buffer_location, off_t offset, int bu
 int proc_protect_write(struct file *file, const char *buffer, unsigned long count, void *data) {
     int cnt;
     int list_cnt;
-    char *raw_data = (char *)data;
+    char *raw_data = raw_data_buff;
     
     conivent_printf("proc_protect write");
     
@@ -323,6 +314,7 @@ int proc_protect_write(struct file *file, const char *buffer, unsigned long coun
     }
     
     raw_data[cnt] = 0;
+    conivent_printf("raw_data %s", raw_data);
     destroy_list(&fileList_root);
     list_cnt = create_list(&fileList_root, raw_data, sizeof raw_data);
     
@@ -337,6 +329,7 @@ int init_communicate(void) {
     data_buf = (char *)vmalloc(BUFFER_SIZE);
     ctrl_data_buf = (char *)vmalloc(BUFFER_SIZE);
     noti_data_buf = (char *)vmalloc(BUFFER_SIZE);
+    raw_data_buff = (char *)vmalloc(BUFFER_SIZE);
     
     if (data_buf == NULL || ctrl_data_buf == NULL || noti_data_buf == NULL) {
         conivent_printf("create buf failed");
@@ -385,8 +378,13 @@ int init_communicate(void) {
 
 void cleanup_communicate(void) {
     conivent_printf("start remove proc");
-    remove_proc_entry(PROC_DIR_NAME, NULL);
+    destroy_list(&fileList_root);
+    vfree(data_buf);
+    vfree(ctrl_data_buf);
+    vfree(noti_data_buf);
+    vfree(raw_data_buff);
     remove_proc_entry(PROC_PROTECT_NAME, proc_dir);
     remove_proc_entry(PROC_CTRL_NAME, proc_dir);
     remove_proc_entry(PROC_NOTI_NAME, proc_dir);
+    remove_proc_entry(PROC_DIR_NAME, NULL);
 }

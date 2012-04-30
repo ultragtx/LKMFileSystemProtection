@@ -5,6 +5,7 @@
 #include "syscallinterception.h"
 #include "printstring.h"
 #include "communicate.h"
+#include "notification.h"
 
 unsigned int clear_and_return_cr0(void)
 {
@@ -91,6 +92,11 @@ static int lkm_init(void) {
         return -1;
     }
     
+    // netlink
+    if (notification_init() != 0) {
+        return -1;
+    }
+    
     return 0;
 }
 
@@ -114,7 +120,7 @@ static void lkm_exit(void)
     
     // proc file
     cleanup_communicate();
-    
+    notification_exit();
     printk(KERN_ALERT "lkm_exit\n");
 }
 module_init(lkm_init);
