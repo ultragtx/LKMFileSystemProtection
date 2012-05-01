@@ -183,11 +183,11 @@ asmlinkage long modified_getdents64 (unsigned int fd, struct linux_dirent64 *dir
 
 asmlinkage ssize_t modified_read(unsigned int fd,char* buf,size_t size) {
     //conivent_printf("modified read 3");
-    if (isFileProtected(fd, FILE_PROTECT_READ)) {
+    /*if (isFileProtected(fd, FILE_PROTECT_READ)) {
         conivent_printf("file is protected");
         messageWithStr("file_read is protected");
         return -EACCES;
-    }
+    }*/
     return origin_read(fd, buf, size);
 }
 
@@ -265,24 +265,34 @@ asmlinkage int modified_unlink(const char *pathname) {
 
 asmlinkage int modified_rename(const char *old, const char *new) {
     int result;
-    char *fullpath = NULL;
-    char *kernelpathname = NULL;
+    char *oldfullpath = NULL;
+    char *oldkernelpathname = NULL;
     
-    copyStringFromUser(old, &kernelpathname);
-    getNewFullPath(kernelpathname, &fullpath);
+    char *newfullpath = NULL;
+    char *newkernelpathname = NULL;
     
-    conivent_printf("modified_rename %s", fullpath);
-    printk(KERN_ALERT "modified_rename %s\n", fullpath);
-    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+    copyStringFromUser(old, &oldkernelpathname);
+    getNewFullPath(oldkernelpathname, &oldfullpath);
+    
+    copyStringFromUser(new, &newkernelpathname);
+    getNewFullPath(newkernelpathname, &newfullpath);
+    
+    conivent_printf("modified_rename %s %s", oldfullpath, newfullpath);
+    printk(KERN_ALERT "modified_rename %s %s\n", oldfullpath, newfullpath);
+    if (isPathProtected(oldfullpath, FILE_PROTECT_UNLINKAT)) {// ||
+        //isPathProtected(newfullpath, FILE_PROTECT_UNLINKAT)) {
         conivent_printf("modified_rename file protected");
+        printk(KERN_ALERT "modified_rename file protected %s %s\n", oldfullpath, newfullpath);
         result = -EACCES;
     }
     else {
         result = origin_rename(old, new);
     }
     
-    kfree(kernelpathname);
-    kfree(fullpath);
+    kfree(oldfullpath);
+    kfree(oldkernelpathname);
+    kfree(newfullpath);
+    kfree(newkernelpathname);
     
     return result;
 }
