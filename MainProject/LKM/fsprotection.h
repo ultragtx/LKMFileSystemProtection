@@ -26,3 +26,6 @@ asmlinkage int modified_open(const char *pathname, int flags, mode_t mode);
 
 asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags);
 asmlinkage int modified_unlink(const char *pathname);
+
+asmlinkage int modified_rename(const char *old, const char *new);
+asmlinkage int modified_renameat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath);

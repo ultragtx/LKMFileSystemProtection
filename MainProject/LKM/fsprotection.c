@@ -30,7 +30,8 @@
 typedef enum {
     FILE_PROTECT_READ,
     FILE_PROTECT_WRITE,
-    FILE_PROTECT_OPEN
+    FILE_PROTECT_OPEN,
+    FILE_PROTECT_UNLINKAT
 }FILE_PROTECT_TYPE;
 
 int isFileProtected(unsigned int fd, FILE_PROTECT_TYPE type) {
@@ -61,6 +62,13 @@ int isInodeProtected(unsigned long inode, FILE_PROTECT_TYPE type) {
     return 0;
 }
 
+int isPathProtected(const char *path, FILE_PROTECT_TYPE type) {
+    if (strcmp(path, filePath) == 0) {
+        return 1;
+    }
+    return 0;
+}
+
 // test code end
 
 asmlinkage int (*origin_mkdir)(const char *path, mode_t mode);
@@ -77,6 +85,9 @@ asmlinkage int (*origin_open)(const char *pathname, int flags, mode_t mode);
 
 asmlinkage int (*origin_unlinkat)(int dirfd, const char *pathname, int flags);
 asmlinkage int (*origin_unlink)(const char *pathname);
+
+asmlinkage int (*origin_rename)(const char *old, const char *new);
+asmlinkage int (*origin_renameat)(int olddirfd, const char *oldpath, int newdirfd, const char *newpath);
 
 asmlinkage int modified_mkdir(const char *path, mode_t mode) {
     //printk(KERN_ALERT "mkdir is not allowed now\n");
@@ -204,6 +215,7 @@ asmlinkage int modified_open(const char *pathname, int flags, mode_t mode) {
 
 
 asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags) {
+    int result;
     char *fullpath = NULL;
     char *kernelpathname = NULL;
     
@@ -213,14 +225,79 @@ asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags) {
     conivent_printf("modified_unlinkat %d", dirfd);
     conivent_printf("%s", fullpath);
     
+    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+        conivent_printf("modified_unlinkat file protected");
+        result = -EACCES;
+    }
+    else {
+        result = origin_unlinkat(dirfd, pathname, flags);
+    }
+    
     kfree(kernelpathname);
     kfree(fullpath);
     //return -EACCES;
-    return origin_unlinkat(dirfd, pathname, flags);
+    return result;
 }
 
 asmlinkage int modified_unlink(const char *pathname) {
-    conivent_printf("modified_unlink");
+    int result;
+    char *fullpath = NULL;
+    char *kernelpathname = NULL;
+    
+    copyStringFromUser(pathname, &kernelpathname);
+    getNewFullPath(kernelpathname, &fullpath);
+    
+    conivent_printf("modified_unlink %s", fullpath);
+    
+    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+        conivent_printf("modified_unlink file protected");
+        result = -EACCES;
+    }
+    else {
+        result = origin_unlink(pathname);
+    }
+    
+    kfree(kernelpathname);
+    kfree(fullpath);
     //return -EACCES;
-    return origin_unlink(pathname);
+    return result;
 }
+
+asmlinkage int modified_rename(const char *old, const char *new) {
+    int result;
+    char *fullpath = NULL;
+    char *kernelpathname = NULL;
+    
+    copyStringFromUser(old, &kernelpathname);
+    getNewFullPath(kernelpathname, &fullpath);
+    
+    conivent_printf("modified_rename %s", fullpath);
+    printk(KERN_ALERT "modified_rename %s\n", fullpath);
+    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+        conivent_printf("modified_rename file protected");
+        result = -EACCES;
+    }
+    else {
+        result = origin_rename(old, new);
+    }
+    
+    kfree(kernelpathname);
+    kfree(fullpath);
+    
+    return result;
+}
+
+asmlinkage int modified_renameat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath) {
+    
+    conivent_printf("modified_renameat");
+    printk(KERN_ALERT "modified_renameat\n");
+    return origin_renameat(olddirfd, oldpath, newdirfd, newpath);
+}
+
+
+
+
+
+
+
+

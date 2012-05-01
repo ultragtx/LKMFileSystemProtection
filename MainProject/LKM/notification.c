@@ -58,15 +58,14 @@ void sendnlmsg(char *message) {
 int messageWithStr(char *str) {
     struct completion cmpl;
     conivent_printf("ready to send");
-    init_completion(&cmpl);
-    wait_for_completion_timeout(&cmpl, 3 * HZ);
+    //init_completion(&cmpl);
+    //wait_for_completion_timeout(&cmpl, 3 * HZ);
     sendnlmsg(str);
     conivent_printf("send done");
     return 0;
 }
 
 int notification_init(void) {
-    //struct completion cmpl;
     
     nl_sk = netlink_kernel_create(&init_net, NETLINK_TEST, 1,   
                                   NULL, NULL, THIS_MODULE);

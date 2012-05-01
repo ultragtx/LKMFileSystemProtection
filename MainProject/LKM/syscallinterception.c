@@ -42,6 +42,9 @@ extern unsigned long origin_open;
 extern unsigned long origin_unlinkat;
 extern unsigned long origin_unlink;
 
+extern unsigned long origin_rename;
+extern unsigned long origin_renameat;
+
 
 static int lkm_init(void) {
     
@@ -69,6 +72,9 @@ static int lkm_init(void) {
     origin_unlinkat = syscall_table[__NR_unlinkat];
     origin_unlink = syscall_table[__NR_unlink];
     
+    origin_rename = syscall_table[__NR_rename];
+    origin_renameat = syscall_table[__NR_renameat];
+    
     //printk("addr of old_handler %x\n", old_handler);
     orig_cr0 = clear_and_return_cr0();
     syscall_table[__NR_mkdir] = (unsigned long)modified_mkdir;
@@ -84,6 +90,9 @@ static int lkm_init(void) {
     
     syscall_table[__NR_unlinkat] = (unsigned long)modified_unlinkat;
     syscall_table[__NR_unlink] = (unsigned long)modified_unlink;
+    
+    syscall_table[__NR_rename] = (unsigned long)modified_rename;
+    syscall_table[__NR_renameat] = (unsigned long)modified_renameat;
     
     setback_cr0(orig_cr0);
     
@@ -115,6 +124,9 @@ static void lkm_exit(void)
     
     syscall_table[__NR_unlinkat] = origin_unlinkat;
     syscall_table[__NR_unlink] = origin_unlink;
+    
+    syscall_table[__NR_rename] = origin_rename;
+    syscall_table[__NR_renameat] = origin_renameat;
     
     setback_cr0(orig_cr0);
     

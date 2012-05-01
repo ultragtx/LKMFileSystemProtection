@@ -9,13 +9,17 @@
 #include <linux/netlink.h>
 #include <linux/socket.h>
 #include <errno.h>
+#include <signal.h>
 
 #define NETLINK_TEST 22
 #define MAX_PAYLOAD 1024  // maximum payload size
 
+#define PROC_DIR "/proc/gsfileprotection"
+#define PROC_PROTECT "/proc/gsfileprotection/protect"
+#define PROC_CTRL "/proc/gsfileprotection/ctrl"
+#define PROC_NOTI "/proc/gsfileprotection/noti"
 
-int main(int argc, char* argv[])
-{
+int notificationReceiver() {
     struct sockaddr_nl src_addr, dest_addr;
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
@@ -70,4 +74,61 @@ int main(int argc, char* argv[])
     close(sock_fd);
     
     return 0;
+}
+
+void printmenu() {
+    printf("1. Protect list\n");
+    printf("2. Add\n");
+    printf("3. Remove\n");
+    printf("9. Quit\n");
+}
+
+int main(int argc, char *argv[]) {
+    pid_t pid;
+    int command;
+    int flag = 1;
+    
+    pid = fork();
+    
+    if (pid < 0) {
+        printf("fork error\n");
+        return -1;
+    }
+    else if (pid == 0) {
+        // child
+        notificationReceiver();
+    }
+    else {
+        // father
+        printmenu();
+        while (flag) {
+            scanf("%d", &command);
+            switch (command) {
+                case 1:
+                    
+                    break;
+                case 2:
+                    
+                    break;
+                case 3:
+                    
+                    break;
+                case 9:
+                    if (kill(pid, SIGTERM) < 0) {
+                        printf("kill error\n");
+                    }
+                    else {
+                        printf("all terminate\n");
+                        flag = 0;
+                    }
+                    break;
+                case 4:
+                    
+                    break;
+                default:
+                    printmenu();
+                    break;
+            }
+        }
+    }
 }
