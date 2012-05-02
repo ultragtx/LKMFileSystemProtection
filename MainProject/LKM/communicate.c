@@ -124,6 +124,20 @@ ProtectType protectTypeFromStr(char *str) {
     return type;
 }
 
+void log_list(void) {
+    struct fileList *next = fileList_root;
+    conivent_printf("---[kernel begin]--------");
+    while (next) {
+        
+        conivent_printf("filePath:%s", next->filePath);
+        conivent_printf("inode:%d", next->inode);
+        conivent_printf("type:%d", next->type);
+        
+        next = next->next;
+    }
+    conivent_printf("---[kernel end]--------");
+}
+
 int create_list(struct fileList **top, char *rdt, size_t sz) {
     int cnt;
     char *tmp_data;
@@ -156,10 +170,10 @@ int create_list(struct fileList **top, char *rdt, size_t sz) {
     do {
         i++;
         p_str1 = (char *)strsep(pp_str1, nl);
-        conivent_printf("p_str1 %s", p_str1);
+        //conivent_printf("p_str1 %s", p_str1);
         pp_substr1 = &p_str1;
         p_substr1 = (char *)strsep(pp_substr1, at);
-        conivent_printf("p_substr1 %s", p_substr1);
+        //conivent_printf("p_substr1 %s", p_substr1);
         if (p_substr1) {
             if (!strcmp(p_substr1, "")) {
                 fs = 0;
@@ -175,15 +189,17 @@ int create_list(struct fileList **top, char *rdt, size_t sz) {
                 strncpy(p_fl->filePath, p_substr1, FILEPATH_SIZE);
                 // protect mode
                 //p_substr1 = (char *)strsep(pp_substr1, at);
-                conivent_printf("pp_substr1 %s", *pp_substr1);
+                //conivent_printf("pp_substr1 %s", *pp_substr1);
                 p_fl->type = protectTypeFromStr(*pp_substr1);
                 // protect mode
                 p_fl->inode = fs->f_dentry->d_inode;
                 p_fl->next = NULL;
                 if (NULL == lastvalid_fl) {
+                    //conivent_printf("root null");
                     *top = p_fl;
                 }
                 else {
+                    //conivent_printf("has tail");
                     p_fl->next = lastvalid_fl->next;
                     lastvalid_fl->next = p_fl;
                 }
@@ -314,10 +330,10 @@ int proc_protect_write(struct file *file, const char *buffer, unsigned long coun
     }
     
     raw_data[cnt] = 0;
-    conivent_printf("raw_data %s", raw_data);
+    //conivent_printf("raw_data %s", raw_data);
     destroy_list(&fileList_root);
     list_cnt = create_list(&fileList_root, raw_data, sizeof raw_data);
-    
+    log_list();
     return cnt;
 }
 
