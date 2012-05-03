@@ -12,6 +12,7 @@
 
 #include "printstring.h"
 #include "communicate.h"
+#include "notification.h"
 
 #define PROC_DIR_NAME "gsfileprotection"
 #define PROC_PROTECT_NAME "protect"
@@ -60,6 +61,47 @@ struct proc_dir_entry *proc_noti;
  file protection
  */
 
+int sendProtectNotiMsg(struct fileList *thisFile) {
+    char *str;
+    //char *p;
+    char *msghead = "Protected:";
+    int flag = 1;
+    
+    str = (char *)vmalloc(sizeof(char) * 260);
+    memset(str, 0, sizeof(char) * 260);
+    
+    strcat(str, msghead);
+    strcat(str, thisFile->filePath);
+    
+    switch (thisFile->type) {
+        case ProtectType_read:
+            strcat(str, "\nRead");
+            break;
+        case ProtectType_write:
+            strcat(str, "\nWrite");
+            break;
+        case ProtectType_hide:
+            strcat(str, "\nHide");
+            break;
+        case ProtectType_open:
+            strcat(str, "\nOpen");
+            break;
+        case ProtectType_del:
+            strcat(str, "\nDelete");
+            break;
+            
+        default:
+            flag = 0;
+            break;
+    }
+    if (flag) {
+        //conivent_printf(str);
+        messageWithStr(str);
+    }
+    vfree(str);
+    return 0;
+}
+
 int is_fd_protected(unsigned int fd, ProtectType ptype) {
     struct file *this_file;
     struct fileList *p;
@@ -70,6 +112,7 @@ int is_fd_protected(unsigned int fd, ProtectType ptype) {
         for (p = fileList_root;p; p = p->next) {
             if (p->inode == this_file->f_dentry->d_inode && p->type == ptype) {
                 protected = 1;
+                sendProtectNotiMsg(p);
                 break;
             }
         }
@@ -83,6 +126,7 @@ int is_ino_protected(unsigned long ino, ProtectType ptype) {
     
     for (p = fileList_root; p; p = p->next) {
         if (p->inode->i_ino == ino && p->type == ptype) {
+            sendProtectNotiMsg(p);
             return 1;
         }
     }
@@ -94,6 +138,7 @@ int is_path_protected(const char *path, ProtectType ptype) {
     
     for (p = fileList_root; p; p = p->next) {
         if (strcmp(path, p->filePath) == 0 && p->type == ptype) {
+            sendProtectNotiMsg(p);
             return 1;
         }
     }
@@ -106,19 +151,19 @@ int is_path_protected(const char *path, ProtectType ptype) {
 
 ProtectType protectTypeFromStr(char *str) {
     ProtectType type = ProtectType_none;
-    if (strcmp(str, "r")) {
+    if (!strcmp(str, "r")) {
         type = ProtectType_read;
     }
-    else if (strcmp(str, "w")) {
+    else if (!strcmp(str, "w")) {
         type = ProtectType_write;
     }
-    else if (strcmp(str, "h")) {
+    else if (!strcmp(str, "h")) {
         type = ProtectType_hide;
     }
-    else if (strcmp(str, "o")) {
+    else if (!strcmp(str, "o")) {
         type = ProtectType_open;
     }
-    else if (strcmp(str, "d")) {
+    else if (!strcmp(str, "d")) {
         type = ProtectType_del;
     }
     return type;

@@ -56,12 +56,12 @@ void sendnlmsg(char *message) {
 }
 
 int messageWithStr(char *str) {
-    struct completion cmpl;
-    conivent_printf("ready to send");
+    //struct completion cmpl;
+    //conivent_printf("ready to send");
     //init_completion(&cmpl);
     //wait_for_completion_timeout(&cmpl, 3 * HZ);
     sendnlmsg(str);
-    conivent_printf("send done");
+    //conivent_printf("send done");
     return 0;
 }
 

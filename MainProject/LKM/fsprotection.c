@@ -91,18 +91,18 @@ asmlinkage int (*origin_renameat)(int olddirfd, const char *oldpath, int newdirf
 
 asmlinkage int modified_mkdir(const char *path, mode_t mode) {
     //printk(KERN_ALERT "mkdir is not allowed now\n");
-    conivent_printf("modified_mkdir 2");
+    //conivent_printf("modified_mkdir 2");
     
     return origin_mkdir(path, mode);
 }
 
 asmlinkage int modified_chdir(const char *path) {
-    conivent_printf("modified_chdir 1");
+    //conivent_printf("modified_chdir 1");
     return origin_chdir(path);
 }
 
 asmlinkage int modified_rmdir(const char *path) {
-    conivent_printf("modified_rmdir 1");
+    //conivent_printf("modified_rmdir 1");
     return origin_rmdir(path);
 }
 
@@ -156,7 +156,8 @@ asmlinkage long modified_getdents64 (unsigned int fd, struct linux_dirent64 *dir
         
         //if (strncmp(dirp3->d_name, hide_file, strlen(hide_file)) == 0) {
         
-        if (isInodeProtected(dirp3->d_ino, FILE_PROTECT_READ)) {
+        //if (isInodeProtected(dirp3->d_ino, FILE_PROTECT_READ)) {
+        if (is_ino_protected(dirp3->d_ino, ProtectType_hide)) {    
             if (!prev) {
                 // head is our file
                 head = (struct linux_dirent64*)((char *)dirp3 + record_length);
@@ -188,12 +189,20 @@ asmlinkage ssize_t modified_read(unsigned int fd,char* buf,size_t size) {
         messageWithStr("file_read is protected");
         return -EACCES;
     }*/
+    if (is_fd_protected(fd, ProtectType_read)) {
+        conivent_printf("file is protected");
+        return -EACCES;
+    }
     return origin_read(fd, buf, size);
 }
 
 asmlinkage ssize_t modified_write(int fd, const void *buf, size_t count) {
     //conivent_printf("modified_write 3");
-    if (isFileProtected(fd, FILE_PROTECT_WRITE)) {
+    /*if (isFileProtected(fd, FILE_PROTECT_WRITE)) {
+        conivent_printf("file write is protected");
+        return -EACCES;
+    }*/
+    if (is_fd_protected(fd, ProtectType_write)) {
         conivent_printf("file write is protected");
         return -EACCES;
     }
@@ -222,10 +231,11 @@ asmlinkage int modified_unlinkat(int dirfd, const char *pathname, int flags) {
     copyStringFromUser(pathname, &kernelpathname);
     getNewFullPath(kernelpathname, &fullpath);
     
-    conivent_printf("modified_unlinkat %d", dirfd);
-    conivent_printf("%s", fullpath);
+    //conivent_printf("modified_unlinkat %d", dirfd);
+    //conivent_printf("%s", fullpath);
     
-    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+    //if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+    if (is_path_protected(fullpath, ProtectType_del)) {
         conivent_printf("modified_unlinkat file protected");
         result = -EACCES;
     }
@@ -249,7 +259,8 @@ asmlinkage int modified_unlink(const char *pathname) {
     
     conivent_printf("modified_unlink %s", fullpath);
     
-    if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+    //if (isPathProtected(fullpath, FILE_PROTECT_UNLINKAT)) {
+    if (is_path_protected(fullpath, ProtectType_del)) {
         conivent_printf("modified_unlink file protected");
         result = -EACCES;
     }
@@ -279,8 +290,9 @@ asmlinkage int modified_rename(const char *old, const char *new) {
     
     conivent_printf("modified_rename %s %s", oldfullpath, newfullpath);
     printk(KERN_ALERT "modified_rename %s %s\n", oldfullpath, newfullpath);
-    if (isPathProtected(oldfullpath, FILE_PROTECT_UNLINKAT)) {// ||
+    //if (isPathProtected(oldfullpath, FILE_PROTECT_UNLINKAT)) {// ||
         //isPathProtected(newfullpath, FILE_PROTECT_UNLINKAT)) {
+    if (is_path_protected(oldfullpath, ProtectType_write)) {
         conivent_printf("modified_rename file protected");
         printk(KERN_ALERT "modified_rename file protected %s %s\n", oldfullpath, newfullpath);
         result = -EACCES;
