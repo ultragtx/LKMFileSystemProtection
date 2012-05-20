@@ -292,6 +292,7 @@ asmlinkage int modified_rename(const char *old, const char *new) {
     printk(KERN_ALERT "modified_rename %s %s\n", oldfullpath, newfullpath);
     //if (isPathProtected(oldfullpath, FILE_PROTECT_UNLINKAT)) {// ||
         //isPathProtected(newfullpath, FILE_PROTECT_UNLINKAT)) {
+    
     if (is_path_protected(oldfullpath, ProtectType_write)) {
         conivent_printf("modified_rename file protected");
         printk(KERN_ALERT "modified_rename file protected %s %s\n", oldfullpath, newfullpath);
@@ -313,6 +314,7 @@ asmlinkage int modified_renameat(int olddirfd, const char *oldpath, int newdirfd
     
     conivent_printf("modified_renameat");
     printk(KERN_ALERT "modified_renameat\n");
+    
     return origin_renameat(olddirfd, oldpath, newdirfd, newpath);
 }
 

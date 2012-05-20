@@ -24,6 +24,7 @@ char *filePath = "/home/hiro/ProtectFile/text.txt";
 char *dirPath = "/home/hiro/ProctectDir";
 struct file *testfs = NULL;
 
+
 void getFs(void) {
     testfs = filp_open(filePath, 0, 1);
     if (IS_ERR(testfs)) {
