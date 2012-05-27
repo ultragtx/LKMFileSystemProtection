@@ -25,6 +25,8 @@
 #define FILELIST_SIZE 256
 #define BUFFER_SIZE (FILEPATH_SIZE * FILELIST_SIZE)
 
+///home/hiro/ProtectFile/text.txt
+
 int protectfd;
 int ctrlfd;
 int notifd;
@@ -104,9 +106,16 @@ int notificationReceiver() {
 
 void printFileList() {
     struct fileList *next = fileList_root;
+    int number = 0;
+    printf("============List============\n");
     while (next) {
-        printf("%s@%c\n", next->filePath, next->type);
+        printf("[%d].%s@%c\n", number++, next->filePath, next->type);
         next = next->next;
+    }
+    printf("============================\n");
+    
+    if (tail) {
+        printf("tail not null\n");
     }
 }
 
@@ -174,6 +183,52 @@ void addFile() {
     refreshFileList();
 }
 
+void removeFile() {
+    struct fileList *pfile = fileList_root;
+    struct fileList *pprevous = NULL;
+    int number;
+    int currentNum = 0;
+    
+    if (pfile == NULL) {
+        printf("No files being protected!\n");
+        return;
+    }
+    printFileList();
+    refreshstdin();
+    printf("Input the number you want to remove:\n");
+    
+    scanf("%d", &number);
+    
+    if (number == 0) {
+        //printf("current:%d root:%d tail:%d\n", pfile, fileList_root, tail);
+        fileList_root = pfile->next;
+
+        if (pfile == tail) {
+            tail = NULL;
+        }
+        free(pfile);
+    }
+    else if (number >= 0) {
+        while (pfile) {
+            if (currentNum == number) {
+                pprevous->next = pfile->next;
+                
+                if (pfile == tail) {
+                    tail = pprevous;
+                }
+                
+                free(pfile);
+                break;
+            }
+            pprevous = pfile;
+            pfile = pfile->next;
+            currentNum++;
+        }
+    }
+    
+    refreshFileList();
+}
+
 void printmenu() {
     printf("1. Protect list\n");
     printf("2. Add\n");
@@ -229,7 +284,7 @@ int main(int argc, char *argv[]) {
                     addFile();
                     break;
                 case 3:
-                    
+                    removeFile();
                     break;
                 case 9:
                     if (kill(pid, SIGTERM) < 0) {
