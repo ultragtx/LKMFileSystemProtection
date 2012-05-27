@@ -365,6 +365,7 @@ int proc_protect_write(struct file *file, const char *buffer, unsigned long coun
         cnt = BUFFER_SIZE;
     }
     else if (count == 0) {
+        destroy_list(&fileList_root);
         return 0;
     }
     else {
