@@ -163,7 +163,7 @@ void addFile() {
     printf("Input file path:\n");
     scanf("%[^\n]", pfile->filePath);
     
-    printf("Input protect type: r(read), w(write), h(hide), d(delete)\n");
+    printf("Input protect type: r(read), w(write), h(hide), d(delete), n(rename)\n");
     refreshstdin();
     scanf("%c", &pfile->type);
     
