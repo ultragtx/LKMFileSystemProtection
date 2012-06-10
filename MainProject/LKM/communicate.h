@@ -4,8 +4,10 @@ typedef enum {
     ProtectType_read,
     ProtectType_write,
     ProtectType_hide,
+    ProtectType_rename,
     ProtectType_open,
-    ProtectType_del
+    ProtectType_del,
+    ProtectType_mkdir
 }ProtectType;
 
 int init_communicate(void);

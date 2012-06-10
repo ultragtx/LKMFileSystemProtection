@@ -90,6 +90,12 @@ int sendProtectNotiMsg(struct fileList *thisFile) {
         case ProtectType_del:
             strcat(str, "\nDelete");
             break;
+        case ProtectType_rename:
+            strcat(str, "\nRename");
+            break;
+        case ProtectType_mkdir:
+            strcat(str, "\nMkdir");
+            break;
             
         default:
             flag = 0;
@@ -166,6 +172,15 @@ ProtectType protectTypeFromStr(char *str) {
     }
     else if (!strcmp(str, "d")) {
         type = ProtectType_del;
+    }
+    else if (!strcmp(str, "n")) {
+        type = ProtectType_rename;
+    }
+    else if (!strcmp(str, "m")) {
+        type = ProtectType_mkdir;
+    }
+    else {
+        type = ProtectType_none;
     }
     return type;
 }

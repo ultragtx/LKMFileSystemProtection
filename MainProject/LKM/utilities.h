@@ -9,3 +9,4 @@ char *getstringfromuser(const char *userstring, char *kernelstring);
 int getNewPathFromFd(unsigned int fd, char **path);
 int getNewFullPath(const char *pathname, char **fullpath);
 int copyStringFromUser(const char *userstring, char **kernelstring);
+int getParentDirFromFullPath(char *path);
