@@ -184,7 +184,7 @@ int getParentDirFromFullPath(char *path) {
         if (path[i] == '/') {
             slashCount--;
             if (slashCount == 0) {
-                path[i + 1] = '\0';
+                path[i] = '\0';
                 break;
             }
         }
