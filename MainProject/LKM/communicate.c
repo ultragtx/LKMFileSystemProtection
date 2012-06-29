@@ -395,7 +395,7 @@ int proc_protect_write(struct file *file, const char *buffer, unsigned long coun
     //conivent_printf("raw_data %s", raw_data);
     destroy_list(&fileList_root);
     list_cnt = create_list(&fileList_root, raw_data, sizeof raw_data);
-    log_list();
+    //log_list();
     return cnt;
 }
 
